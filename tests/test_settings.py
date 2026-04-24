@@ -3,6 +3,7 @@ import pytest
 from mcp_server_qdrant.embeddings.types import EmbeddingProviderType
 from mcp_server_qdrant.settings import (
     DEFAULT_TOOL_FIND_DESCRIPTION,
+    DEFAULT_TOOL_LIST_COLLECTIONS_DESCRIPTION,
     DEFAULT_TOOL_STORE_DESCRIPTION,
     EmbeddingProviderSettings,
     QdrantSettings,
@@ -85,6 +86,10 @@ class TestToolSettings:
         settings = ToolSettings()
         assert settings.tool_store_description == DEFAULT_TOOL_STORE_DESCRIPTION
         assert settings.tool_find_description == DEFAULT_TOOL_FIND_DESCRIPTION
+        assert (
+            settings.tool_list_collections_description
+            == DEFAULT_TOOL_LIST_COLLECTIONS_DESCRIPTION
+        )
 
     def test_custom_store_description(self, monkeypatch):
         """Test loading custom store description from environment variable."""
@@ -104,6 +109,26 @@ class TestToolSettings:
         """Test loading all custom values from environment variables."""
         monkeypatch.setenv("TOOL_STORE_DESCRIPTION", "Custom store description")
         monkeypatch.setenv("TOOL_FIND_DESCRIPTION", "Custom find description")
+        monkeypatch.setenv(
+            "TOOL_LIST_COLLECTIONS_DESCRIPTION", "Custom list collections description"
+        )
         settings = ToolSettings()
         assert settings.tool_store_description == "Custom store description"
         assert settings.tool_find_description == "Custom find description"
+        assert (
+            settings.tool_list_collections_description
+            == "Custom list collections description"
+        )
+
+    def test_custom_list_collections_description(self, monkeypatch):
+        """Test loading custom list collections description from environment variable."""
+        monkeypatch.setenv(
+            "TOOL_LIST_COLLECTIONS_DESCRIPTION", "Custom list collections description"
+        )
+        settings = ToolSettings()
+        assert settings.tool_store_description == DEFAULT_TOOL_STORE_DESCRIPTION
+        assert settings.tool_find_description == DEFAULT_TOOL_FIND_DESCRIPTION
+        assert (
+            settings.tool_list_collections_description
+            == "Custom list collections description"
+        )

@@ -90,6 +90,15 @@ class QdrantMCPServer(FastMCP):
         Register the tools in the server.
         """
 
+        async def list_collections(ctx: Context) -> list[str]:
+            """
+            List all available collections in the Qdrant server.
+            :param ctx: The context for the request.
+            :return: A list of collection names.
+            """
+            await ctx.debug("Listing Qdrant collections")
+            return await self.qdrant_connector.get_collection_names()
+
         async def store(
             ctx: Context,
             information: Annotated[str, Field(description="Text to store")],
@@ -188,6 +197,12 @@ class QdrantMCPServer(FastMCP):
             find_foo,
             name="qdrant-find",
             description=self.tool_settings.tool_find_description,
+        )
+
+        self.tool(
+            list_collections,
+            name="qdrant-list-collections",
+            description=self.tool_settings.tool_list_collections_description,
         )
 
         if not self.qdrant_settings.read_only:
