@@ -59,6 +59,22 @@ Note: You cannot provide both `QDRANT_URL` and `QDRANT_LOCAL_PATH` at the same t
 > [!IMPORTANT]
 > Command-line arguments are not supported anymore! Please use environment variables for all configuration.
 
+## Helper CLI: vectorize a .txt into a collection
+
+This repo also ships a small helper CLI to take a `.txt` file, embed its full contents, and upsert it into a Qdrant
+collection (creating the collection if needed).
+
+```bash
+qdrant-vectorize-txt file.txt collection_name
+```
+
+It uses the same environment variables as the server (`QDRANT_URL`, `QDRANT_API_KEY`, `QDRANT_LOCAL_PATH`,
+`EMBEDDING_MODEL`, etc.). You can optionally pass extra payload metadata:
+
+```bash
+uvx qdrant-vectorize-txt ./notes.txt my-collection --metadata-json '{"tag":"personal"}'
+```
+
 ### FastMCP Environment Variables
 
 Since `mcp-server-qdrant` is based on FastMCP, it also supports all the FastMCP environment variables. The most
