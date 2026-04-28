@@ -61,7 +61,6 @@ def _build_metadata(txt_path: Path, extra_metadata: dict[str, Any] | None, chunk
     metadata: dict[str, Any] = {
         "source_name": txt_path.name,
         "chunk_index": chunk_idx,
-        "source_type": "txt",
     }
     if extra_metadata:
         metadata.update(extra_metadata)
