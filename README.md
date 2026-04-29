@@ -72,7 +72,7 @@ It uses the same environment variables as the server (`QDRANT_URL`, `QDRANT_API_
 `EMBEDDING_MODEL`, etc.). You can optionally pass extra payload metadata:
 
 ```bash
-uvx qdrant-vectorize-txt ./notes.txt my-collection --metadata-json '{"tag":"personal"}'
+QDRANT_URL="http://localhost:6333" uv run qdrant-vectorize-txt   "/home/alejandro/Escritorio/docs/app_general_revision_doc_examples/OTP_evaluacion_general_40801.26.0197.000_1_2014190.txt"   "app_general_revision_doc_examples"
 ```
 
 ### FastMCP Environment Variables
