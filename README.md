@@ -141,19 +141,6 @@ default endpoint path `/mcp` (not `/sse`):
 QDRANT_URL="http://localhost:6333" FASTMCP_HOST="127.0.0.1" uv run mcp-server-qdrant --transport streamable-http
 ```
 
-When exposing the port publicly (e.g. via a tunnel), configure the tool URL as `https://<your-domain>/mcp`.
-
-If you see errors like `424 (Failed Dependency)` in OpenAI while the server logs show `200 OK`, it's often caused by
-intermediaries/tunnels not handling streaming responses well. In that case, enable JSON + stateless mode:
-
-```shell
-FASTMCP_SERVER_JSON_RESPONSE=true \
-FASTMCP_SERVER_STATELESS_HTTP=true \
-QDRANT_URL="http://localhost:6333" \
-COLLECTION_NAME="my-collection" \
-uvx mcp-server-qdrant --transport streamable-http
-```
-
 ### Using Docker
 
 A Dockerfile is available for building and running the MCP server:
