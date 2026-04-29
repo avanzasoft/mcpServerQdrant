@@ -3,8 +3,10 @@ import logging
 from typing import Annotated, Any, Optional
 
 from fastmcp import Context, FastMCP
+from fastmcp.server.http import create_base_app
 from pydantic import Field
 from qdrant_client import models
+from starlette.routing import Route
 
 from mcp_server_qdrant.common.filters import make_indexes
 from mcp_server_qdrant.common.func_tools import make_partial_function
@@ -212,3 +214,74 @@ class QdrantMCPServer(FastMCP):
                 name="qdrant-store",
                 description=self.tool_settings.tool_store_description,
             )
+
+    def http_app(  # type: ignore[override]
+        self,
+        path: str | None = None,
+        middleware=None,
+        transport: str = "streamable-http",
+    ):
+        """
+        Override FastMCP's default HTTP app to avoid 307 redirects on `/mcp`.
+
+        Some clients (including OpenAI Agents' remote MCP connector) probe the endpoint with
+        `GET /mcp` and do not follow the framework-generated redirect to `/mcp/`, which causes
+        tool discovery to fail.
+        """
+        if transport != "streamable-http":
+            return super().http_app(path=path, middleware=middleware, transport=transport)
+
+        from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+        from starlette.applications import Starlette
+        from contextlib import asynccontextmanager
+        from typing import AsyncGenerator
+
+        streamable_http_path = path or self.settings.streamable_http_path
+
+        session_manager = StreamableHTTPSessionManager(
+            app=self._mcp_server,
+            event_store=None,
+            json_response=self.settings.json_response,
+            stateless=self.settings.stateless_http,
+        )
+
+        class _StreamableHttpAsgiApp:
+            def __init__(self, manager: StreamableHTTPSessionManager):
+                self._manager = manager
+
+            async def __call__(self, scope, receive, send) -> None:
+                await self._manager.handle_request(scope, receive, send)
+
+        asgi_app = _StreamableHttpAsgiApp(session_manager)
+
+        routes = [
+            # Serve both with and without trailing slash, without redirects.
+            Route(
+                streamable_http_path.rstrip("/"),
+                endpoint=asgi_app,
+                methods=["GET", "POST", "OPTIONS"],
+            ),
+            Route(
+                streamable_http_path.rstrip("/") + "/",
+                endpoint=asgi_app,
+                methods=["GET", "POST", "OPTIONS"],
+            ),
+        ]
+        # Preserve any additional routes registered on the server.
+        routes.extend(self._additional_http_routes)
+
+        @asynccontextmanager
+        async def lifespan(app: Starlette) -> AsyncGenerator[None, None]:
+            async with session_manager.run():
+                yield
+
+        app = create_base_app(
+            routes=routes,
+            middleware=list(middleware) if middleware else [],
+            debug=self.settings.debug,
+            lifespan=lifespan,
+        )
+        app.state.fastmcp_server = self
+        # Keep the same state attribute used by FastMCP for logging.
+        app.state.path = streamable_http_path
+        return app
