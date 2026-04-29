@@ -138,11 +138,7 @@ If you're connecting this server as a remote MCP tool in OpenAI Agents/ChatGPT, 
 default endpoint path `/mcp` (not `/sse`):
 
 ```shell
-QDRANT_URL="http://localhost:6333" \
-COLLECTION_NAME="my-collection" \
-FASTMCP_HOST="127.0.0.1" \
-FASTMCP_PORT=8000 \
-uvx mcp-server-qdrant --transport streamable-http
+QDRANT_URL="http://localhost:6333" FASTMCP_HOST="127.0.0.1" uv run mcp-server-qdrant --transport streamable-http
 ```
 
 When exposing the port publicly (e.g. via a tunnel), configure the tool URL as `https://<your-domain>/mcp`.
