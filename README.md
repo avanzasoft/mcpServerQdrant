@@ -141,6 +141,36 @@ default endpoint path `/mcp` (not `/sse`):
 QDRANT_URL="http://localhost:6333" FASTMCP_HOST="127.0.0.1" uv run mcp-server-qdrant --transport streamable-http
 ```
 
+#### CSV downloads
+
+The `export_csv` tool writes files under `storage/tmp/downloads` and returns an absolute HTTP URL like
+`http://127.0.0.1:8000/downloads/<file>.csv?exp=...&sig=...` (signed + expiring).
+
+The server also exposes `GET /downloads/<file>.csv` over HTTP; if the server is behind a proxy or you need a different
+hostname, set:
+
+```shell
+FASTMCP_PUBLIC_BASE_URL="http://localhost:8000"
+```
+
+Configure signed links (recommended):
+
+```shell
+# required (use a long random value)
+FASTMCP_DOWNLOADS_SECRET="change-me-to-a-long-random-string"
+# optional (default 300 seconds)
+FASTMCP_DOWNLOADS_TTL_SECONDS="300"
+```
+
+FASTMCP_PUBLIC_BASE_URL is used for generating the absolute URL returned by `export_csv`.
+
+If you run the server from outside the project folder (e.g. installed package), set the document root used for saving
+CSVs:
+
+```shell
+FASTMCP_DOCUMENT_ROOT="/path/to/your/project"
+```
+
 ### Using Docker
 
 A Dockerfile is available for building and running the MCP server:
@@ -189,6 +219,11 @@ To use this server with the Claude Desktop app, add the following configuration 
   }
 }
 ```
+
+### `.env` file
+
+All settings can be provided via environment variables, but this project also reads a local `.env` file (if present).
+Start by copying `.env.example` to `.env` and editing values.
 
 For local Qdrant mode:
 

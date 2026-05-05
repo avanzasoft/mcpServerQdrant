@@ -137,6 +137,55 @@ class QdrantConnector:
             for result in search_results.points
         ]
 
+    async def list_entries(
+        self,
+        *,
+        collection_name: str | None = None,
+        limit: int = 1000,
+        query_filter: models.Filter | None = None,
+        batch_size: int = 128,
+    ) -> list[Entry]:
+        """
+        List (scroll) entries from a Qdrant collection.
+
+        This is useful for exporting data without providing a search query.
+        Returns up to ``limit`` entries.
+        """
+        collection_name = collection_name or self._default_collection_name
+        assert collection_name is not None
+
+        collection_exists = await self._client.collection_exists(collection_name)
+        if not collection_exists:
+            return []
+
+        entries: list[Entry] = []
+        offset: Any = None
+
+        while len(entries) < limit:
+            page_limit = min(batch_size, limit - len(entries))
+            points, offset = await self._client.scroll(
+                collection_name=collection_name,
+                scroll_filter=query_filter,
+                limit=page_limit,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+
+            if not points:
+                break
+
+            for point in points:
+                payload = point.payload or {}
+                content = payload.get("document", "")
+                metadata = payload.get(METADATA_PATH)
+                entries.append(Entry(content=content, metadata=metadata))
+
+            if offset is None:
+                break
+
+        return entries
+
     async def _ensure_collection_exists(self, collection_name: str):
         """
         Ensure that the collection exists, creating it if necessary.

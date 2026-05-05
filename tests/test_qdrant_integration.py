@@ -91,6 +91,12 @@ async def test_multiple_entries(qdrant_connector):
     assert len(ai_results) > 0
     assert any("machine learning" in result.content.lower() for result in ai_results)
 
+    # Listing entries should return the stored points (order not guaranteed)
+    listed = await qdrant_connector.list_entries(limit=10)
+    assert len(listed) == len(entries)
+    listed_contents = {e.content for e in listed}
+    assert {e.content for e in entries}.issubset(listed_contents)
+
 
 @pytest.mark.asyncio
 async def test_ensure_collection_exists(qdrant_connector):

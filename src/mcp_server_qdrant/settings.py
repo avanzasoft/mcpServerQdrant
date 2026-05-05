@@ -1,7 +1,7 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from mcp_server_qdrant.embeddings.types import EmbeddingProviderType
 
@@ -21,7 +21,17 @@ DEFAULT_TOOL_LIST_COLLECTIONS_DESCRIPTION = (
 METADATA_PATH = "metadata"
 
 
-class ToolSettings(BaseSettings):
+class ProjectSettings(BaseSettings):
+    """
+    Base settings for this project.
+
+    Loads environment variables and also reads from a local `.env` file if present.
+    """
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+
+class ToolSettings(ProjectSettings):
     """
     Configuration for all the tools.
     """
@@ -40,7 +50,36 @@ class ToolSettings(BaseSettings):
     )
 
 
-class EmbeddingProviderSettings(BaseSettings):
+class DownloadsSettings(ProjectSettings):
+    """
+    Configuration for CSV downloads.
+    """
+
+    document_root: str = Field(
+        default=".",
+        validation_alias="FASTMCP_DOCUMENT_ROOT",
+        description="Project document root used for resolving storage/tmp/downloads.",
+    )
+    public_base_url: str | None = Field(
+        default=None,
+        validation_alias="FASTMCP_PUBLIC_BASE_URL",
+        description="Base URL used to build absolute download links.",
+    )
+    downloads_secret: str | None = Field(
+        default=None,
+        validation_alias="FASTMCP_DOWNLOADS_SECRET",
+        description="Secret used to sign download links (HMAC-SHA256). If unset, downloads are not signed.",
+    )
+    downloads_ttl_seconds: int = Field(
+        default=300,
+        validation_alias="FASTMCP_DOWNLOADS_TTL_SECONDS",
+        description="Signed download link TTL in seconds.",
+        ge=1,
+        le=24 * 60 * 60,
+    )
+
+
+class EmbeddingProviderSettings(ProjectSettings):
     """
     Configuration for the embedding provider.
     """
@@ -78,7 +117,7 @@ class FilterableField(BaseModel):
     )
 
 
-class QdrantSettings(BaseSettings):
+class QdrantSettings(ProjectSettings):
     """
     Configuration for the Qdrant connector.
     """
